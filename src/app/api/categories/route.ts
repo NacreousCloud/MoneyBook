@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
-import { NextRequest, NextResponse } from 'next/server';
 import { decode } from 'jsonwebtoken';
+import { NextRequest, NextResponse } from 'next/server';
 
 function getUserIdFromRequest(req: NextRequest) {
   const token = req.cookies.get('sb-access-token')?.value;

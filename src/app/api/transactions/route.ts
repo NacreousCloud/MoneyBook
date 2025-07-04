@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
-import { NextRequest, NextResponse } from 'next/server';
 import { decode } from 'jsonwebtoken';
+import { NextRequest, NextResponse } from 'next/server';
 
 function getUserIdFromRequest(req: NextRequest) {
   const token = req.cookies.get('sb-access-token')?.value;
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       { error: 'Month parameter is required' },
       { status: 400 },
-    );
+    )
   }
   const [year, monthNum] = month.split('-');
   const startDate = `${year}-${monthNum}-01`;

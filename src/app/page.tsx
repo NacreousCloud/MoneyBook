@@ -33,9 +33,7 @@ export default function Home() {
           </h2>
           <TransactionForm />
         </div>
-        <div>
-          <TransactionList />
-        </div>
+        <div>{/* <TransactionList /> */}</div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
