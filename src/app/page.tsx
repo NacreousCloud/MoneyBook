@@ -1,8 +1,6 @@
 'use client';
 
 import MonthlyTransactions from '@/components/MonthlyTransactions';
-import TransactionForm from '@/components/TransactionForm';
-import TransactionList from '@/components/TransactionList';
 import CategoryManager from '@/components/CategoryManager';
 import { useState } from 'react';
 
@@ -26,17 +24,7 @@ export default function Home() {
           카테고리 관리
         </button>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
-            거래 내역 입력
-          </h2>
-          <TransactionForm />
-        </div>
-        <div>{/* <TransactionList /> */}</div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
         {/* 월별 지출내역 */}
         <div>
           <div className="flex items-center justify-between mb-4">
