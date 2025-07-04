@@ -16,9 +16,10 @@ import type { Transaction, CategorySummary } from '@/lib/types';
 
 type Props = {
   month: string; // YYYY-MM
+  setMonth: (month: string) => void;
 };
 
-export default function MonthlyTransactions({ month }: Props) {
+export default function MonthlyTransactions({ month, setMonth }: Props) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +41,14 @@ export default function MonthlyTransactions({ month }: Props) {
   // 거래 추가 핸들러
   const handleAddTransaction = (newTransaction: Transaction) => {
     setTransactions((prev) => [newTransaction, ...prev]);
+    // 입력한 거래의 날짜로 월 이동
+    const date = new Date(newTransaction.date);
+    const newMonth = `${date.getFullYear()}-${String(
+      date.getMonth() + 1,
+    ).padStart(2, '0')}`;
+    if (newMonth !== month) {
+      setMonth(newMonth);
+    }
   };
 
   if (loading) {

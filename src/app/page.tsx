@@ -36,7 +36,10 @@ export default function Home() {
               className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
           </div>
-          <MonthlyTransactions month={selectedMonth} />
+          <MonthlyTransactions
+            month={selectedMonth}
+            setMonth={setSelectedMonth}
+          />
         </div>
       </div>
       {/* 카테고리 관리 모달 */}
