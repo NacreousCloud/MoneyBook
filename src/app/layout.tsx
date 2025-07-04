@@ -1,4 +1,5 @@
 // import type { Metadata } from 'next';
+import UserHeader from '@/components/UserHeader';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
@@ -22,7 +23,7 @@ export default function RootLayout({
           <div className="min-h-screen bg-gray-50">
             <nav className="bg-white shadow-sm">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16">
+                <div className="flex justify-between h-16 items-center">
                   <div className="flex">
                     <div className="flex-shrink-0 flex items-center">
                       <h1 className="text-xl font-bold text-gray-900">
@@ -30,6 +31,7 @@ export default function RootLayout({
                       </h1>
                     </div>
                   </div>
+                  <UserHeader />
                 </div>
               </div>
             </nav>

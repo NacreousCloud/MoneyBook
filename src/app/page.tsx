@@ -3,6 +3,7 @@
 import MonthlyTransactions from '@/components/MonthlyTransactions';
 import TransactionForm from '@/components/TransactionForm';
 import TransactionList from '@/components/TransactionList';
+import CategoryManager from '@/components/CategoryManager';
 import { useState } from 'react';
 
 export default function Home() {
@@ -13,9 +14,18 @@ export default function Home() {
       '0',
     )}`;
   });
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <button
+          className="bg-indigo-500 text-white px-4 py-2 rounded shadow hover:bg-indigo-600"
+          onClick={() => setShowCategoryManager(true)}
+        >
+          카테고리 관리
+        </button>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <h2 className="text-lg font-medium text-gray-900 mb-4">
@@ -43,6 +53,20 @@ export default function Home() {
           <MonthlyTransactions month={selectedMonth} />
         </div>
       </div>
+      {/* 카테고리 관리 모달 */}
+      {showCategoryManager && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              onClick={() => setShowCategoryManager(false)}
+            >
+              ✕
+            </button>
+            <CategoryManager />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
