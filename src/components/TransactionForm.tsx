@@ -1,12 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type TransactionFormData = {
   date: string;
   category: string;
   amount: number;
   memo: string;
+};
+
+type Category = {
+  id: string;
+  name: string;
 };
 
 export default function TransactionForm() {
@@ -16,10 +21,23 @@ export default function TransactionForm() {
     amount: 0,
     memo: '',
   });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // 사용자별 카테고리 목록 불러오기
+    const fetchCategories = async () => {
+      setLoading(true);
+      const res = await fetch('/api/categories');
+      const data = await res.json();
+      setCategories(Array.isArray(data) ? data : []);
+      setLoading(false);
+    };
+    fetchCategories();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
     // API 호출로 거래 내역 저장
     try {
       const response = await fetch('/api/transactions', {
@@ -37,8 +55,6 @@ export default function TransactionForm() {
       }
 
       const result = await response.json();
-      console.log('Transaction saved:', result);
-
       // 폼 초기화
       setFormData({
         date: new Date().toISOString().split('T')[0],
@@ -46,10 +62,8 @@ export default function TransactionForm() {
         amount: 0,
         memo: '',
       });
-
       alert('거래 내역이 저장되었습니다.');
     } catch (error) {
-      console.error('Error saving transaction:', error);
       alert('저장 중 오류가 발생했습니다.');
     }
   };
@@ -91,13 +105,14 @@ export default function TransactionForm() {
           }
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           required
+          disabled={loading}
         >
           <option value="">선택하세요</option>
-          <option value="식비">식비</option>
-          <option value="교통비">교통비</option>
-          <option value="주거비">주거비</option>
-          <option value="통신비">통신비</option>
-          <option value="기타">기타</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.name}>
+              {cat.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -139,6 +154,7 @@ export default function TransactionForm() {
       <button
         type="submit"
         className="w-full rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        disabled={loading}
       >
         저장
       </button>
