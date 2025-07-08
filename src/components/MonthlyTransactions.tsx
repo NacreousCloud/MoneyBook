@@ -13,6 +13,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { Transaction, CategorySummary } from '@/lib/types';
+import * as XLSX from 'xlsx';
 
 type Props = {
   month: string; // YYYY-MM
@@ -31,6 +32,7 @@ export default function MonthlyTransactions({ month, setMonth }: Props) {
     null,
   );
   const modalBgRef = useRef<HTMLDivElement>(null);
+  const [excelRows, setExcelRows] = useState<any[]>([]);
 
   // 토스트 메시지 자동 사라짐
   useEffect(() => {
@@ -107,6 +109,23 @@ export default function MonthlyTransactions({ month, setMonth }: Props) {
     }
   };
 
+  // 엑셀 파일 업로드 및 파싱
+  const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const data = evt.target?.result;
+      if (!data) return;
+      const workbook = XLSX.read(data, { type: 'binary' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      setExcelRows(rows);
+    };
+    reader.readAsBinaryString(file);
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -127,6 +146,13 @@ export default function MonthlyTransactions({ month, setMonth }: Props) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* 엑셀 업로드 버튼 */}
+      <div className="col-span-2 mb-4">
+        <label className="inline-block bg-indigo-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-indigo-700">
+          엑셀 업로드
+          <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelUpload} />
+        </label>
+      </div>
       {/* 토스트 메시지 UI */}
       {message && (
         <div
