@@ -5,6 +5,7 @@ export type Transaction = {
   category: string;
   amount: number;
   memo: string;
+  tags: string[];
   created_at: string;
 };
 
@@ -13,9 +14,15 @@ export type MonthlyTransaction = {
   category: string;
   amount: number;
   memo: string;
+  tags: string[];
 };
 
 export type CategorySummary = {
   category: string;
+  total: number;
+};
+
+export type TagSummary = {
+  tag: string;
   total: number;
 }; 

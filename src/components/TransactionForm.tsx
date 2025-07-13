@@ -8,6 +8,7 @@ type TransactionFormData = {
   category: string;
   amount: number;
   memo: string;
+  tags: string[];
 };
 
 type Category = {
@@ -25,6 +26,7 @@ export default function TransactionForm({ onAdd }: Props) {
     category: '',
     amount: 0,
     memo: '',
+    tags: [],
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,7 @@ export default function TransactionForm({ onAdd }: Props) {
   const [messageType, setMessageType] = useState<'success' | 'error' | null>(
     null,
   );
+  const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
     // 사용자별 카테고리 목록 불러오기
@@ -55,6 +58,42 @@ export default function TransactionForm({ onAdd }: Props) {
       return () => clearTimeout(timer);
     }
   }, [message]);
+
+  // 태그 색상 생성 함수
+  const getTagColor = (tag: string) => {
+    const colors = [
+      'bg-blue-100 text-blue-800',
+      'bg-green-100 text-green-800',
+      'bg-yellow-100 text-yellow-800',
+      'bg-red-100 text-red-800',
+      'bg-purple-100 text-purple-800',
+      'bg-pink-100 text-pink-800',
+      'bg-indigo-100 text-indigo-800',
+      'bg-gray-100 text-gray-800',
+    ];
+    const index = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[index % colors.length];
+  };
+
+  // 태그 추가 함수
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      if (newTag && !formData.tags.includes(newTag)) {
+        setFormData({ ...formData, tags: [...formData.tags, newTag] });
+      }
+      setTagInput('');
+    }
+  };
+
+  // 태그 제거 함수
+  const handleRemoveTag = (tagToRemove: string) => {
+    setFormData({
+      ...formData,
+      tags: formData.tags.filter(tag => tag !== tagToRemove),
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +120,9 @@ export default function TransactionForm({ onAdd }: Props) {
         category: '',
         amount: 0,
         memo: '',
+        tags: [],
       });
+      setTagInput('');
       setMessage('거래 내역이 저장되었습니다.');
       setMessageType('success');
       if (onAdd) {
@@ -190,6 +231,43 @@ export default function TransactionForm({ onAdd }: Props) {
             onChange={(e) => setFormData({ ...formData, memo: e.target.value })}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           />
+        </div>
+
+        <div>
+          <label
+            htmlFor="tags"
+            className="block text-sm font-medium text-gray-700"
+          >
+            태그
+          </label>
+          <input
+            type="text"
+            id="tags"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleAddTag}
+            placeholder="태그를 입력하고 Enter 또는 쉼표를 누르세요"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
+          {formData.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {formData.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTagColor(tag)}`}
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="ml-1 text-xs hover:text-red-600"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <button
