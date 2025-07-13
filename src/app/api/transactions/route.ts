@@ -52,13 +52,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const body = await req.json();
-  const { data, error } = await supabase
-    .from('transactions')
-    .insert([{ ...body, user_id }])
-    .select()
-    .single();
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (Array.isArray(body)) {
+    // 여러 건 일괄 저장
+    const rows = body.map((row) => ({ ...row, user_id }));
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert(rows)
+      .select();
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(data);
+  } else {
+    // 단일 저장
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert([{ ...body, user_id }])
+      .select()
+      .single();
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(data);
   }
-  return NextResponse.json(data);
 }

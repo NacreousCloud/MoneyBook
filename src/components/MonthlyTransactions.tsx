@@ -33,6 +33,8 @@ export default function MonthlyTransactions({ month, setMonth }: Props) {
   );
   const modalBgRef = useRef<HTMLDivElement>(null);
   const [excelRows, setExcelRows] = useState<any[]>([]);
+  const [excelModalOpen, setExcelModalOpen] = useState(false);
+  const [excelPreviewRows, setExcelPreviewRows] = useState<any[]>([]);
 
   // 토스트 메시지 자동 사라짐
   useEffect(() => {
@@ -109,6 +111,34 @@ export default function MonthlyTransactions({ month, setMonth }: Props) {
     }
   };
 
+  // 엑셀 날짜 시리얼 넘버 변환 함수
+  function excelDateToString(excelDate: any) {
+    if (typeof excelDate === 'number') {
+      // 엑셀 시리얼 넘버를 KST(UTC+9) 기준 JS 날짜로 변환
+      const date = new Date(Math.round((excelDate - 25569) * 86400 * 1000) + 9 * 60 * 60 * 1000);
+      return date.toISOString().slice(0, 10);
+    }
+    if (typeof excelDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(excelDate)) {
+      return excelDate.slice(0, 10);
+    }
+    // 기타: 그대로 반환
+    return excelDate;
+  }
+  // 엑셀 시간 시리얼 넘버 변환 함수
+  function excelTimeToString(excelTime: any) {
+    if (typeof excelTime === 'number') {
+      // 엑셀 시리얼 넘버를 HH:mm으로 변환
+      const totalSeconds = Math.round(excelTime * 24 * 60 * 60);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+    if (typeof excelTime === 'string' && /^\d{2}:\d{2}/.test(excelTime)) {
+      return excelTime.slice(0, 5);
+    }
+    return excelTime;
+  }
+
   // 엑셀 파일 업로드 및 파싱
   const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -124,6 +154,64 @@ export default function MonthlyTransactions({ month, setMonth }: Props) {
       setExcelRows(rows);
     };
     reader.readAsBinaryString(file);
+  };
+
+  // 엑셀 업로드 후 미리보기 모달 자동 오픈
+  useEffect(() => {
+    if (excelRows.length > 0) {
+      // 컬럼 매핑: 날짜, 시간, 대분류+소분류→category, 금액, 메모 등
+      const mapped = excelRows.map((row) => {
+        const date = excelDateToString(row['날짜']);
+        const time = excelTimeToString(row['시간']);
+        const content = row['내용'].trim() || '';
+        const memo = row['메모'].trim() || '';
+        return {
+          date,
+          category: row['대분류'],
+          amount: Number(row['금액'] || 0),
+          memo: content && memo ? `${content} [${memo}]` : (content || memo),
+          // time, // 필요시 추가
+        };
+      });
+      setExcelPreviewRows(mapped);
+      setExcelModalOpen(true);
+    }
+  }, [excelRows]);
+
+  // 엑셀 미리보기 행 수정
+  const handleExcelEdit = (idx: number, key: string, value: any) => {
+    setExcelPreviewRows((prev) => prev.map((row, i) => i === idx ? { ...row, [key]: value } : row));
+  };
+  // 엑셀 미리보기 행 삭제
+  const handleExcelDelete = (idx: number) => {
+    setExcelPreviewRows((prev) => prev.filter((_, i) => i !== idx));
+  };
+  // 엑셀 미리보기 모달 닫기
+  const closeExcelModal = () => {
+    setExcelModalOpen(false);
+    setExcelRows([]);
+    setExcelPreviewRows([]);
+  };
+  // 엑셀 일괄 저장
+  const handleExcelSave = async () => {
+    if (excelPreviewRows.length === 0) return;
+    try {
+      const response = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(excelPreviewRows),
+      });
+      if (!response.ok) throw new Error('저장 실패');
+      const result = await response.json();
+      setMessage('엑셀 데이터가 저장되었습니다.');
+      setMessageType('success');
+      closeExcelModal();
+      // 저장 후 새로고침
+      setMonth(month);
+    } catch {
+      setMessage('엑셀 저장 중 오류가 발생했습니다.');
+      setMessageType('error');
+    }
   };
 
   if (loading) {
@@ -358,6 +446,57 @@ export default function MonthlyTransactions({ month, setMonth }: Props) {
               >
                 {editLoading ? '저장 중...' : '저장'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 엑셀 미리보기 모달 */}
+      {excelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-3xl relative">
+            <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700" onClick={closeExcelModal}>✕</button>
+            <h2 className="text-lg font-bold mb-4">엑셀 데이터 미리보기</h2>
+            <div className="overflow-x-auto max-h-[60vh]">
+              <table className="min-w-full divide-y divide-gray-200 text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2">날짜</th>
+                    <th className="px-4 py-2">분류</th>
+                    <th className="px-4 py-2">금액</th>
+                    <th className="px-4 py-2">메모</th>
+                    <th className="px-4 py-2">삭제</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {excelPreviewRows.map((row, idx) => (
+                    <tr key={idx}>
+                      <td className="px-4 py-2">
+                        <input type="date" className="border rounded px-2 py-1 w-32" value={row.date} onChange={e => handleExcelEdit(idx, 'date', e.target.value)} />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input type="text" className="border rounded px-2 py-1 w-32" value={row.category} onChange={e => handleExcelEdit(idx, 'category', e.target.value)} />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input type="number" className="border rounded px-2 py-1 w-24" value={row.amount} onChange={e => handleExcelEdit(idx, 'amount', e.target.value)} />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input type="text" className="border rounded px-2 py-1 w-32" value={row.memo} onChange={e => handleExcelEdit(idx, 'memo', e.target.value)} />
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <button className="text-red-500 hover:underline" onClick={() => handleExcelDelete(idx)}>삭제</button>
+                      </td>
+                    </tr>
+                  ))}
+                  {excelPreviewRows.length === 0 && (
+                    <tr><td colSpan={5} className="text-center">데이터가 없습니다.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400" onClick={closeExcelModal}>취소</button>
+              <button className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700" onClick={handleExcelSave}>저장</button>
             </div>
           </div>
         </div>
